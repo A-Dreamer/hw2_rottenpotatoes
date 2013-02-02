@@ -8,6 +8,19 @@ class MoviesController < ApplicationController
 
   def index
 	sel_ratings = params[ :ratings ]
+	sort_by = params[:order]
+	if  sel_ratings == nil && sort_by == nil 
+		sel_ratings = session[:ratings] 
+		sort_by = session[:order]
+		if  sel_ratings != nil || sort_by != nil 
+			flash.keep
+			redirect_to movies_path ( {:ratings => sel_ratings , :order => sort_by} )
+		end
+	else
+		session[ :ratings ] = sel_ratings
+		session[ :order ] = sort_by
+	end
+
 	@search_ratings = Array.new
         @all_ratings = Hash.new
 	Movie.find_by_sql("select DISTINCT rating from movies order by rating" ).each do |rate| 
@@ -18,12 +31,9 @@ class MoviesController < ApplicationController
 			@all_ratings[ rate.rating ] = nil
 		end
 	end
-	sort_by = params[:order]
 	if sort_by
-#    		@movies = Movie.all( :order => sort_by )
     		@movies = Movie.where( "movies.rating IN (?)", @search_ratings ).order( sort_by )
  	else
-#		@movies = Movie.all
 		@movies = Movie.where( "movies.rating IN (?)", @search_ratings )
 	end
 	instance_variable_set("@#{sort_by}_header", "hilite")
